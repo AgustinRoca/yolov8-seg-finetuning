@@ -1,0 +1,8 @@
+# Repository specific files
+datasets
+ground_truth
+imgs
+runs
+*.pt
+*.yaml
+preprocess_masks.py
