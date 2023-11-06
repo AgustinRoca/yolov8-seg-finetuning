@@ -5,7 +5,7 @@
 1. Clone the repository
 
     ```bash
-    git clone https://github.com/AgustinRoca/yolov8-finetunning.git
+    git clone https://github.com/AgustinRoca/yolov8-seg-finetuning.git
     ```
 
 2. Install dependencies
