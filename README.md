@@ -8,12 +8,6 @@
     git clone https://github.com/AgustinRoca/yolov8-seg-finetuning.git
     ```
 
-2. Install dependencies
-
-    ```bash
-    pip3 install -r requirements.txt
-    ```
-
 ## Prepare dataset
 
 1. Put the input images in `imgs/` and the corresponding masks in `ground_truth/`.
