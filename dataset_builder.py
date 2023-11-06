@@ -22,29 +22,7 @@ def build_dataset(dataset_name, imgs_path, mask_path, validation_percentage=0.5,
         Percentage of the dataset to use for testing. The default is 0.
     """
 
-    # Create the dataset directory
-    dataset_path = os.path.join('datasets', dataset_name)
-    os.makedirs(dataset_path, exist_ok=True)
-
-    # Create the train and val directories
-    dataset_imgs_path = os.path.join(dataset_path, 'images')
-    dataset_labels_path = os.path.join(dataset_path, 'labels')
-    os.makedirs(dataset_imgs_path, exist_ok=True)
-    os.makedirs(dataset_labels_path, exist_ok=True)
-
-    # Create the images and labels directories
-    train_imgs_path = os.path.join(dataset_imgs_path, 'train')
-    train_labels_path = os.path.join(dataset_labels_path, 'train')
-    val_imgs_path = os.path.join(dataset_imgs_path, 'val')
-    val_labels_path = os.path.join(dataset_labels_path, 'val')
-    test_imgs_path = os.path.join(dataset_imgs_path, 'test')
-    test_labels_path = os.path.join(dataset_labels_path, 'test')
-    os.makedirs(train_imgs_path, exist_ok=True)
-    os.makedirs(train_labels_path, exist_ok=True)
-    os.makedirs(val_imgs_path, exist_ok=True)
-    os.makedirs(val_labels_path, exist_ok=True)
-    os.makedirs(test_imgs_path, exist_ok=True)
-    os.makedirs(test_labels_path, exist_ok=True)
+    paths = create_directories(dataset_name)
 
     all_masks = os.listdir(mask_path)
     all_imgs = [img.split('_')[0] + '.JPG' for img in all_masks]
@@ -61,38 +39,57 @@ def build_dataset(dataset_name, imgs_path, mask_path, validation_percentage=0.5,
     test_data = all_data[test_start_index:test_end_index]
     train_data = all_data[train_start_index:train_end_index]
 
-    # Copy the images and masks to the train, val and test directories
+    create_txts(train_data, 'train', imgs_path, mask_path, paths)
+    create_txts(val_data, 'val', imgs_path, mask_path, paths)
+    create_txts(test_data, 'test', imgs_path, mask_path, paths)
+    
+
+def create_txts(train_data, category, imgs_path, mask_path, paths):
     for img, mask in train_data:
-        shutil.copy(os.path.join(imgs_path, img), os.path.join(train_imgs_path, img))
-        create_label(os.path.join(mask_path, mask), os.path.join(train_labels_path, mask))
+        shutil.copy(os.path.join(imgs_path, img), os.path.join(paths['images'][category], img))
+        create_label(os.path.join(mask_path, mask), os.path.join(paths['labels'][category], mask))
 
-    for img, mask in val_data:
-        shutil.copy(os.path.join(imgs_path, img), os.path.join(val_imgs_path, img))
-        create_label(os.path.join(mask_path, mask), os.path.join(val_labels_path, mask))
-
-    for img, mask in test_data:
-        shutil.copy(os.path.join(imgs_path, img), os.path.join(test_imgs_path, img))
-        create_label(os.path.join(mask_path, mask), os.path.join(test_labels_path, mask))
-
-    # Create the train.txt file
-    train_txt_path = os.path.join(dataset_path, 'train.txt')
+    train_txt_path = os.path.join(paths['dataset'], f'{category}.txt')
     with open(train_txt_path, 'w') as f:
-        for img in os.listdir(train_imgs_path):
-            f.write(os.path.join(train_imgs_path, img) + '\n')
+        for img in os.listdir(paths['images'][category]):
+            f.write(os.path.join(paths['images'][category], img) + '\n')
 
-    # Create the val.txt file
-    val_txt_path = os.path.join(dataset_path, 'val.txt')
-    with open(val_txt_path, 'w') as f:
-        for img in os.listdir(val_imgs_path):
-            f.write(os.path.join(val_imgs_path, img) + '\n')
+def create_directories(dataset_name):
+    paths = {}
+    paths['dataset'] = os.path.join('datasets', dataset_name)
+    os.makedirs(paths['dataset'], exist_ok=True)
 
-    # Create the test.txt file
-    test_txt_path = os.path.join(dataset_path, 'test.txt')
-    with open(test_txt_path, 'w') as f:
-        for img in os.listdir(test_imgs_path):
-            f.write(os.path.join(test_imgs_path, img) + '\n')
+    paths['images'] = create_train_val_test_dirs(paths['dataset'], 'images')
+    paths['labels'] = create_train_val_test_dirs(paths['dataset'], 'labels')
+
+    return paths
+
+def create_train_val_test_dirs(dataset_path,root_path):
+    dirs = {}
+    dataset_root_path = os.path.join(dataset_path, root_path)
+    os.makedirs(dataset_root_path, exist_ok=True)
+    train_path = os.path.join(dataset_root_path, 'train')
+    val_path = os.path.join(dataset_root_path, 'val')
+    test_path = os.path.join(dataset_root_path, 'test')
+    os.makedirs(train_path, exist_ok=True)
+    os.makedirs(val_path, exist_ok=True)
+    os.makedirs(test_path, exist_ok=True)
+    dirs['train'] = train_path
+    dirs['val'] = val_path
+    dirs['test'] = test_path
+    return dirs
 
 def create_label(image_path, label_path):
+    """
+    It creates a label file for a given image.
+
+    Parameters
+    ----------
+    image_path : str
+        Image with the segmentation.
+    label_path : str
+        Output file.
+    """
     arr = np.asarray(Image.open(image_path))
 
     # There may be a better way to do it, but this is what I have found so far
@@ -102,4 +99,5 @@ def create_label(image_path, label_path):
     with open(label_path.split('_')[0] + '.txt', "w+") as f:
         f.write(label_line + '\n')
 
-build_dataset('venados', 'imgs', 'ground_truth', 0.12, 0)
+if __name__ == '__main__':
+    build_dataset('venados', 'imgs', 'ground_truth', 0.12, 0)
