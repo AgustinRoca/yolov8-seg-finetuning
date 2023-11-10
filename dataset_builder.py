@@ -42,6 +42,17 @@ def build_dataset(dataset_name, imgs_path, mask_path, validation_percentage=0.5,
     create_txts(train_data, 'train', imgs_path, mask_path, paths)
     create_txts(val_data, 'val', imgs_path, mask_path, paths)
     create_txts(test_data, 'test', imgs_path, mask_path, paths)
+
+    with open(f'{dataset_name}-seg.yaml', 'w') as f:
+        s = f"""path: ../datasets/{dataset_name}
+train: images/train
+val: images/val
+
+# Classes
+names:
+  0: venado
+"""
+        f.write(s)
     
 
 def create_txts(train_data, category, imgs_path, mask_path, paths):
@@ -94,10 +105,12 @@ def create_label(image_path, label_path):
 
     # There may be a better way to do it, but this is what I have found so far
     cords = list(features.shapes(arr, mask=(arr >0)))[0][0]['coordinates'][0]
-    label_line = '0 ' + ' '.join([f'{int(cord[0])/arr.shape[1]} {int(cord[1])/arr.shape[0]}' for cord in cords]) # TODO: Check if the order is correct
+    label_line = '0 ' + ' '.join([f'{int(cord[0])/arr.shape[1]} {int(cord[1])/arr.shape[0]}' for cord in cords])
 
-    with open(label_path.split('_')[0] + '.txt', "w+") as f:
+    with open('_'.join(label_path.split('_')[:-1]) + '.txt', "w+") as f:
         f.write(label_line + '\n')
 
 if __name__ == '__main__':
-    build_dataset('venados', 'imgs', 'ground_truth', 0.12, 0)
+    val_percentage = 0.9
+    dataset_name = f'venados_{1-val_percentage:.1f}-{val_percentage:.1f}'
+    build_dataset(dataset_name, 'imgs', 'ground_truth', val_percentage, 0)

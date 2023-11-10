@@ -1,9 +1,15 @@
 # Repository specific files
 datasets
-Fotos editadas
-ground_truth
-imgs
+*.JPG
+*.png
+*.xcf
 runs
 *.pt
 *.yaml
 preprocess_masks.py
+graph.py
+test_performance_vs_training.py
+*.csv
+
+# Python
+__pycache__/
