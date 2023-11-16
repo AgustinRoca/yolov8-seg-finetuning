@@ -6,9 +6,6 @@ datasets
 runs
 *.pt
 *.yaml
-preprocess_masks.py
-graph.py
-test_performance_vs_training.py
 *.csv
 
 # Python
