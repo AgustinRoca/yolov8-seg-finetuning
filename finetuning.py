@@ -5,11 +5,13 @@ def main():
 
     # Train the model
     # results = model.train(data='coco-seg.yaml', epochs=100, imgsz=640)
-    val_percentage = 0.9
-    dataset_name = f'venados_{1-val_percentage:.1f}-{val_percentage:.1f}'
+    train_percentage = 0.8
+    test_percentage = 0.1
+    val_percentage = 1 - train_percentage - test_percentage
+    dataset_name = f'venados_{train_percentage:.1f}-{val_percentage:.1f}'
     results = model.train(data=f'{dataset_name}-seg.yaml', epochs=100, imgsz=1280, 
                           flipud=0.5, 
-                          degrees=45,
+                          degrees=45
                           )
 
 if __name__ == '__main__':

@@ -4,10 +4,11 @@ from PIL import Image
 import matplotlib.pyplot as plt
 
 def main():
-    imgs = os.listdir('runs/segment/predict')
+    predict_path = 'runs/segment/predict7'
+    imgs = os.listdir(predict_path)
     for img_name in tqdm(imgs):
         img_path = os.path.join('imgs', img_name)
-        prediction_path = os.path.join('runs/segment/predict', img_name)
+        prediction_path = os.path.join(predict_path, img_name)
         img = Image.open(img_path)
         prediction = Image.open(prediction_path)
         fig = plt.figure(figsize=(20, 10))

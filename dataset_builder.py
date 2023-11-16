@@ -3,8 +3,9 @@ import shutil
 from rasterio import features
 from PIL import Image
 import numpy as np
+from datetime import datetime
 
-def build_dataset(dataset_name, imgs_path, mask_path, validation_percentage=0.5, test_percentage=0):
+def build_dataset(dataset_name, imgs_path, mask_path, validation_percentage=0.5, test_percentage=0, seed=42):
     """
     It transforms plain images and masks to a YOLOv8 dataset.
 
@@ -25,18 +26,24 @@ def build_dataset(dataset_name, imgs_path, mask_path, validation_percentage=0.5,
     paths = create_directories(dataset_name)
 
     all_masks = os.listdir(mask_path)
-    all_imgs = [img.split('_')[0] + '.JPG' for img in all_masks]
+    all_imgs = [img.split('.')[0] + '.JPG' for img in all_masks]
     all_data = list(zip(all_imgs, all_masks))
+    size = len(all_data)
+    all_data.sort()
+    np.random.seed(seed)
+    np.random.shuffle(all_data)
+    test_start_index = 0
+    test_end_index = test_start_index + int(size * test_percentage)
+    test_data = all_data[test_start_index: test_end_index]
+    all_data = all_data[test_end_index:]
+    np.random.seed(int(datetime.now().timestamp()))
     np.random.shuffle(all_data)
     validation_start_index = 0
-    validation_end_index = int(len(all_data) * validation_percentage)
-    test_start_index = validation_end_index
-    test_end_index = test_start_index + int(len(all_data) * test_percentage)
-    train_start_index = test_end_index
+    validation_end_index = int(size * validation_percentage)
+    train_start_index = validation_end_index
     train_end_index = len(all_data)
 
     val_data = all_data[validation_start_index:validation_end_index]
-    test_data = all_data[test_start_index:test_end_index]
     train_data = all_data[train_start_index:train_end_index]
 
     create_txts(train_data, 'train', imgs_path, mask_path, paths)
@@ -47,6 +54,7 @@ def build_dataset(dataset_name, imgs_path, mask_path, validation_percentage=0.5,
         s = f"""path: ../datasets/{dataset_name}
 train: images/train
 val: images/val
+test: images/test
 
 # Classes
 names:
@@ -107,10 +115,13 @@ def create_label(image_path, label_path):
     cords = list(features.shapes(arr, mask=(arr >0)))[0][0]['coordinates'][0]
     label_line = '0 ' + ' '.join([f'{int(cord[0])/arr.shape[1]} {int(cord[1])/arr.shape[0]}' for cord in cords])
 
-    with open('_'.join(label_path.split('_')[:-1]) + '.txt', "w+") as f:
+    with open('.'.join(label_path.split('.')[:-1]) + '.txt', "w+") as f:
         f.write(label_line + '\n')
 
 if __name__ == '__main__':
-    val_percentage = 0.9
-    dataset_name = f'venados_{1-val_percentage:.1f}-{val_percentage:.1f}'
-    build_dataset(dataset_name, 'imgs', 'ground_truth', val_percentage, 0)
+    for train_percentage in np.arange(0.1, 0.9, 0.1):
+        test_percentage = 0.1
+        val_percentage = 1 - train_percentage - test_percentage
+        dataset_name = f'venados_{train_percentage:.1f}-{val_percentage:.1f}'
+        
+        build_dataset(dataset_name, 'imgs', 'ground_truth', val_percentage, test_percentage)
